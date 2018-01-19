@@ -35,7 +35,7 @@ end
 
 function love.draw()
     drawPieces()
-    drawDebug()
+    --drawDebug()
 end
 
 function createPieces()
@@ -84,6 +84,7 @@ function drawPieces()
         love.graphics.draw(c.image, quad, c.x, c.y)
         
         -- Debug
+        --[[
         love.graphics.print(i .. " | id=" .. c.id .. " (" .. c.x .."," .. c.y .. "), " .. tostring(c.alpha), c.x+10, c.y+10)
         if i == idVide then
             love.graphics.print("ID = " .. tostring(idVide), c.x+10, c.y+30)
@@ -92,6 +93,7 @@ function drawPieces()
             love.graphics.print("G = " .. tostring(G), c.x+10, c.y+90)
             love.graphics.print("D = " .. tostring(D), c.x+10, c.y+110)
         end
+        --]]
     end
 end
 
