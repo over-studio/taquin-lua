@@ -16,7 +16,11 @@ math.randomseed( os.time() )
 
 function love.load()
     -- spritesheet
-    piecesImage = love.graphics.newImage(PATH_SPRITESHEET)
+    if DEBUG then
+        piecesImage = love.graphics.newImage(PATH_SPRITESHEET_DEBUG)
+    else
+        piecesImage = love.graphics.newImage(PATH_SPRITESHEET)
+    end
     -- dimensions de spritesheet
     wImg, hImg = piecesImage:getDimensions()
     -- créer les cases
@@ -35,7 +39,7 @@ end
 
 function love.draw()
     drawPieces()
-    --drawDebug()
+    if DEBUG then drawDebug() end
 end
 
 function createPieces()
@@ -44,11 +48,8 @@ function createPieces()
         case = {}
         case.correct = i
         case.id = i
-        case.x = ((i-1) % NB_CASES) * SIZE_PIECE
-        case.y = math.floor((i-1) / NB_CASES) * SIZE_PIECE
         case.xTex = ((i-1) % NB_CASES) * SIZE_PIECE
         case.yTex = math.floor((i-1) / NB_CASES) * SIZE_PIECE
-        case.size = SIZE_PIECE
         case.depart = false
         case.image = piecesImage
         case.alpha = 1
@@ -73,6 +74,7 @@ function placerPieces()
 end
 
 function drawPieces()
+    --love.graphics.setBackgroundColor(0, 0, 0)
     local c, posX, posY
     for i=1, #pieces do
         c = pieces[i]
@@ -80,20 +82,22 @@ function drawPieces()
         posX = ((i-1) % NB_CASES) * SIZE_PIECE
         posY = math.floor((i-1) / NB_CASES) * SIZE_PIECE
         
-        local quad = love.graphics.newQuad(c.xTex, c.yTex, c.size, c.size, wImg, hImg)
-        love.graphics.draw(c.image, quad, c.x, c.y)
+        if c.id ~= #pieces then
+            local quad = love.graphics.newQuad(c.xTex, c.yTex, SIZE_PIECE, SIZE_PIECE, wImg, hImg)
+            love.graphics.draw(c.image, quad, c.x, c.y)
+        end
         
         -- Debug
-        --[[
-        love.graphics.print(i .. " | id=" .. c.id .. " (" .. c.x .."," .. c.y .. "), " .. tostring(c.alpha), c.x+10, c.y+10)
-        if i == idVide then
-            love.graphics.print("ID = " .. tostring(idVide), c.x+10, c.y+30)
-            love.graphics.print("H = " .. tostring(H), c.x+10, c.y+50)
-            love.graphics.print("B = " .. tostring(B), c.x+10, c.y+70)
-            love.graphics.print("G = " .. tostring(G), c.x+10, c.y+90)
-            love.graphics.print("D = " .. tostring(D), c.x+10, c.y+110)
-        end
-        --]]
+        if DEBUG then 
+            --love.graphics.print(i .. " | id=" .. c.id .. " (" .. c.x .."," .. c.y .. "), " .. tostring(c.alpha), c.x+10, c.y+10)
+            if i == idVide then
+                --love.graphics.print("ID = " .. tostring(idVide), c.x+10, c.y+30)
+                love.graphics.print("H = " .. tostring(H), c.x+50, c.y+50)
+                love.graphics.print("B = " .. tostring(B), c.x+50, c.y+120)
+                love.graphics.print("G = " .. tostring(G), c.x+10, c.y+80)
+                love.graphics.print("D = " .. tostring(D), c.x+95, c.y+80)
+            end
+        end 
     end
 end
 
