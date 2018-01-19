@@ -12,9 +12,15 @@ local B -- id de la case qui se trouve en bas de la case vide si elle existe
 local G -- id de la case qui se trouve à gauche de la case vide si elle existe
 local D -- id de la case qui se trouve à droite de la case vide si elle existe
 
+local partieGagne = false -- définie à TRUE si le joueur arrive à remettre en place toutes les cases
+
+local mainSound = love.audio.newSource(MAIN_SOUND, "static")
+
 math.randomseed( os.time() )
 
 function love.load()
+    mainSound:play()
+    mainFont = love.graphics.newFont(PATH_MAIN_FONT, 30)
     -- spritesheet
     if DEBUG then
         piecesImage = love.graphics.newImage(PATH_SPRITESHEET_DEBUG)
@@ -50,7 +56,6 @@ function createPieces()
         case.id = i
         case.xTex = ((i-1) % NB_CASES) * SIZE_PIECE
         case.yTex = math.floor((i-1) / NB_CASES) * SIZE_PIECE
-        case.depart = false
         case.image = piecesImage
         case.alpha = 1
         table.insert(pieces, case)
@@ -59,7 +64,6 @@ function createPieces()
     -- définir la dernière case comme case vide
     local caseVide = pieces[#pieces]
     caseVide.alpha = 0
-    caseVide.depart = true
 end
 
 function placerPieces()
@@ -69,35 +73,41 @@ function placerPieces()
 
         if pieces[i].alpha == 0 then idVide = i end
     end
+
     -- redéfinir les directions possibles à partir de la case vide
     directionCaseVide()
 end
 
 function drawPieces()
-    --love.graphics.setBackgroundColor(0, 0, 0)
-    local c, posX, posY
-    for i=1, #pieces do
-        c = pieces[i]
-        
-        posX = ((i-1) % NB_CASES) * SIZE_PIECE
-        posY = math.floor((i-1) / NB_CASES) * SIZE_PIECE
-        
-        if c.id ~= #pieces then
-            local quad = love.graphics.newQuad(c.xTex, c.yTex, SIZE_PIECE, SIZE_PIECE, wImg, hImg)
-            love.graphics.draw(c.image, quad, c.x, c.y)
-        end
-        
-        -- Debug
-        if DEBUG then 
-            --love.graphics.print(i .. " | id=" .. c.id .. " (" .. c.x .."," .. c.y .. "), " .. tostring(c.alpha), c.x+10, c.y+10)
-            if i == idVide then
-                --love.graphics.print("ID = " .. tostring(idVide), c.x+10, c.y+30)
-                love.graphics.print("H = " .. tostring(H), c.x+50, c.y+50)
-                love.graphics.print("B = " .. tostring(B), c.x+50, c.y+120)
-                love.graphics.print("G = " .. tostring(G), c.x+10, c.y+80)
-                love.graphics.print("D = " .. tostring(D), c.x+95, c.y+80)
+    if not partieGagne then
+        local c, posX, posY
+        for i=1, #pieces do
+            c = pieces[i]
+            
+            posX = ((i-1) % NB_CASES) * SIZE_PIECE
+            posY = math.floor((i-1) / NB_CASES) * SIZE_PIECE
+            
+            if c.id ~= #pieces then
+                local quad = love.graphics.newQuad(c.xTex, c.yTex, SIZE_PIECE-4, SIZE_PIECE-4, wImg, hImg)
+                love.graphics.draw(c.image, quad, c.x+2, c.y+2)
             end
-        end 
+            
+            -- Debug
+            if DEBUG then 
+                --love.graphics.print(i .. " | id=" .. c.id .. " (" .. c.x .."," .. c.y .. "), " .. tostring(c.alpha), c.x+10, c.y+10)
+                love.graphics.print(i .. " | id=" .. c.id .. " | " .. tostring(c.alpha), c.x+10, c.y+10)
+                if i == idVide then
+                    --love.graphics.print("ID = " .. tostring(idVide), c.x+10, c.y+30)
+                    love.graphics.print("H = " .. tostring(H), c.x+50, c.y+50)
+                    love.graphics.print("B = " .. tostring(B), c.x+50, c.y+120)
+                    love.graphics.print("G = " .. tostring(G), c.x+10, c.y+80)
+                    love.graphics.print("D = " .. tostring(D), c.x+95, c.y+80)
+                end
+            end 
+        end
+    else
+        love.graphics.setFont(mainFont)
+        love.graphics.print("Brabo!\nPartie gangee", 120, HAUTEUR/2-50)
     end
 end
 
@@ -106,6 +116,8 @@ function love.keypressed(key)
     if key == "down" and H ~= nil then inversePieces(idVide, H) end
     if key == "left" and D ~= nil then inversePieces(idVide, D) end
     if key == "right" and G ~= nil then inversePieces(idVide, G) end
+    -- tester si la partie est terminée
+    gagne()
 end
 
 function inversePieces(p1, p2)
@@ -151,7 +163,7 @@ end
 function melangerCases()
     local rand
     local c
-    for i=1, 500 do
+    for i=1, NB_MELANGE do
         c = nil
         -- choisir un nombre alétoire entre 1 et 4
         while c == nil do
@@ -162,7 +174,10 @@ function melangerCases()
             if rand == 3 then c = G end
             if rand == 4 then c = D end
 
-            if c ~= nil then print("tour "..i.."\t\t", rand, idVide, c); inversePieces(idVide, c) end
+            if c ~= nil then 
+                print("tour "..i.."\t\t", rand, idVide, c)
+                inversePieces(idVide, c)
+            end
             placerPieces()
         end
         
@@ -182,4 +197,18 @@ function drawDebug()
         sDebug = sDebug .. idd .. "\t\t" .. " (" .. posX .."," .. posY .. ")" .. "\t\t\t" .. c.alpha .. "\n"
     end
     love.graphics.print(sDebug, 620, 20)
+end
+
+function gagne()
+    local counter = 0
+    for i=1, #pieces do
+        if i == pieces[i].id then
+            counter = counter + 1
+        end
+    end
+
+    if counter == #pieces then
+        partieGagne = true
+        print("Bravo! Partie gagnée!")
+    end
 end
